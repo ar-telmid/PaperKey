@@ -19,11 +19,11 @@ internal object PaperKeyCrypto {
 
     fun deriveKey(passphrase: ByteArray, nonce: ByteArray): ByteArray {
         val result = argon2.hash(
-            mode = Argon2Mode.ARGON2_id,
+            mode = Argon2Mode.ARGON2_ID, // الأحرف كلها كبيرة (ARGON2_ID)
             passphrase = passphrase,
             salt = nonce,
-            tCostInIterations = 3,
-            mCostInKibibytes = 16384,
+            tCost = 3,                   // اسم المعامل الصحيح tCost
+            mCostInKibibytes = 16384,    // 16 MiB
             parallelism = 4,
             hashLengthInBytes = KEY_SZ
         )
