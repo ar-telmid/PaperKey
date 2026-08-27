@@ -2,6 +2,7 @@ package com.bouazza.paperkey.internal
 
 import com.lambdapioneer.argon2kt.Argon2Kt
 import com.lambdapioneer.argon2kt.Argon2Mode
+import com.lambdapioneer.argon2kt.Argon2Version
 import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
@@ -19,15 +20,16 @@ internal object PaperKeyCrypto {
 
     fun deriveKey(passphrase: ByteArray, nonce: ByteArray): ByteArray {
         val result = argon2.hash(
-            mode = Argon2Mode.ARGON2_ID, // الأحرف كلها كبيرة (ARGON2_ID)
-            passphrase = passphrase,
+            mode = Argon2Mode.ARGON2_ID,
+            version = Argon2Version.V13,
+            password = passphrase,
             salt = nonce,
-            tCost = 3,                   // اسم المعامل الصحيح tCost
-            mCostInKibibytes = 16384,    // 16 MiB
+            tCostInIterations = 3,
+            mCostInKibibyte = 16384,
             parallelism = 4,
             hashLengthInBytes = KEY_SZ
         )
-        return result.rawHash
+        return result.rawHashAsByteArray()
     }
 
     fun encrypt(secretKey: ByteArray, passphraseBytes: ByteArray, nonce: ByteArray, metaBytes: ByteArray): ByteArray {
