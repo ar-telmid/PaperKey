@@ -14,6 +14,7 @@ class PaperKey private constructor(
         @JvmStatic
         fun generate(keyId: String, passphrase: CharArray): PaperKey {
             require(keyId.isNotEmpty()) { "Key ID cannot be empty" }
+            require(keyId.length <= 8) { "Key ID cannot exceed 8 characters" }
 
             val secretKey = PaperKeyCrypto.generateRandomBytes(PaperKeyCrypto.KEY_SZ)
             val nonce = PaperKeyCrypto.generateRandomBytes(PaperKeyCrypto.NONCE_SZ)
@@ -53,13 +54,20 @@ class PaperKey private constructor(
             if (bytes.size != PaperKeyCrypto.CTR_SZ) {
                 throw PaperKeyException("Invalid container size: ${bytes.size} bytes (Expected ${PaperKeyCrypto.CTR_SZ})")
             }
+            
             val sig = bytes.copyOfRange(0, 3)
             if (!sig.contentEquals(PaperKeyCrypto.HEADER_SIG)) {
                 throw PaperKeyException("Invalid PaperKey signature or unsupported version")
             }
 
+            val payload = bytes.copyOfRange(0, bytes.size - 1)
+            val checksumByte = bytes.last()
+            if (PaperKeyCrypto.calcChecksum(payload) != checksumByte) {
+                throw PaperKeyException("Container corruption detected (Checksum Mismatch)!")
+            }
+
             val (keyId, ts) = try {
-                MetaPacker.unpack(bytes.copyOfRange(3, 15))
+                MetaPacker.unpack(bytes.copyOfRange(3, 14))
             } catch (e: Exception) {
                 throw PaperKeyException("Corrupted metadata header", e)
             }
@@ -89,10 +97,10 @@ class PaperKey private constructor(
         onFailed: (error: PaperKeyException) -> Unit
     ) {
         try {
-            val metaBytes = rawContainer.copyOfRange(3, 15)
-            val nonce = rawContainer.copyOfRange(15, 27)
-            val tag = rawContainer.copyOfRange(27, 43)
-            val ciphertext = rawContainer.copyOfRange(43, 75)
+            val metaBytes = rawContainer.copyOfRange(3, 14)
+            val nonce = rawContainer.copyOfRange(14, 26)
+            val tag = rawContainer.copyOfRange(26, 42)
+            val ciphertext = rawContainer.copyOfRange(42, 74)
 
             val passphraseBytes = String(passphrase).toByteArray(Charsets.UTF_8)
             val secretKey = PaperKeyCrypto.decrypt(
