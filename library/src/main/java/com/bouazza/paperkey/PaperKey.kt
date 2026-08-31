@@ -91,12 +91,12 @@ class PaperKey private constructor(
         file.writeText(toHex(), Charsets.US_ASCII)
     }
 
-    fun ByteArray.toHex(): String =
+    private fun ByteArray.toHex(): String =
         joinToString("") { "%02X".format(it) }
 
     fun decrypt(
         passphrase: CharArray,
-        onSuccess: (secretKey: ByteArray) -> Unit,
+        onSuccess: (secretKey: String) -> Unit,
         onFailed: (error: PaperKeyException) -> Unit
     ) {
         try {
