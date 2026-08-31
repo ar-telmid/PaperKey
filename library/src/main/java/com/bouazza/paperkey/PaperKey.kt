@@ -91,6 +91,9 @@ class PaperKey private constructor(
         file.writeText(toHex(), Charsets.US_ASCII)
     }
 
+    fun ByteArray.toHex(): String =
+        joinToString("") { "%02X".format(it) }
+
     fun decrypt(
         passphrase: CharArray,
         onSuccess: (secretKey: ByteArray) -> Unit,
@@ -112,7 +115,7 @@ class PaperKey private constructor(
                 ciphertext
             )
 
-            onSuccess(secretKey)
+            onSuccess(secretKey.toHex())
         } catch (e: Exception) {
             onFailed(PaperKeyException("Decryption failed: Incorrect passphrase or corrupted data", e))
         }
